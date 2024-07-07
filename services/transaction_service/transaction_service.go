@@ -88,6 +88,86 @@ func (t *TransactionServiceServer) MakeTransaction(ctx context.Context, req *pb.
 	}, nil
 }
 
+func (t *TransactionServiceServer) MakeDeposit(ctx context.Context, req *pb.MakeDepositMakeWithdrawRequest) (*pb.Status, error) {
+	accountNum := req.GetAccountNumber()
+	accountPass := req.GetPassword()
+	amount := req.GetAmount()
+	message := req.GetMessage()
+
+	// Authenticate
+	isAuthenticated, err := authenticateAccount(accountNum, accountPass, t.db)
+	if err != nil {
+		return generateInternalServerErrMsg()
+	}
+
+	if !isAuthenticated {
+		return &pb.Status{
+			Success: false,
+			Message: "Failed to authenticate",
+		}, nil
+	}
+
+	// Make deposit
+	err = makeDeposit(accountNum, amount, message, t.db)
+	if err != nil {
+		return &pb.Status{
+			Success: false,
+			Message: "Transaction failed due to some internal server error",
+		}, nil
+	}
+
+	return &pb.Status{
+		Success: true,
+		Message: "Deposit successful",
+	}, nil
+}
+
+func (t *TransactionServiceServer) MakeWithdraw(ctx context.Context, req *pb.MakeDepositMakeWithdrawRequest) (*pb.Status, error) {
+	accountNum := req.GetAccountNumber()
+	accountPass := req.GetPassword()
+	amount := req.GetAmount()
+	message := req.GetMessage()
+
+	// Authenticate
+	isAuthenticated, err := authenticateAccount(accountNum, accountPass, t.db)
+	if err != nil {
+		return generateInternalServerErrMsg()
+	}
+
+	if !isAuthenticated {
+		return &pb.Status{
+			Success: false,
+			Message: "Failed to authenticate",
+		}, nil
+	}
+
+	// Check sufficient balance
+	hasSufficientBal, err := checkSufficientBalance(accountNum, amount, t.db)
+	if err != nil {
+		return generateInternalServerErrMsg()
+	}
+	if !hasSufficientBal {
+		return &pb.Status{
+			Success: false,
+			Message: "Insufficient balance",
+		}, nil
+	}
+
+	// Make withdraw
+	err = makeWithdraw(accountNum, amount, message, t.db)
+	if err != nil {
+		return &pb.Status{
+			Success: false,
+			Message: "Transaction failed due to some internal server error",
+		}, nil
+	}
+
+	return &pb.Status{
+		Success: true,
+		Message: "Withdraw successful",
+	}, nil
+}
+
 func generateInternalServerErrMsg() (*pb.Status, error) {
 	return &pb.Status{
 		Success: false,

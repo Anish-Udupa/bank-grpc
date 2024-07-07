@@ -40,6 +40,13 @@ message MakeTransactionRequest {
     Transaction transaction = 3;
 }
 
+message MakeDepositMakeWithdrawRequest {
+    uint32 account_number = 1;
+    string password = 2;
+    uint32 amount = 3;
+    string message = 4;
+}
+
 service AccountService {
     rpc CreateAccount(CreateAccountRequest) returns (Status);
     rpc GetAccountBalance(GetAccountBalanceRequest) returns (GetAccountBalanceResponse);
@@ -47,4 +54,6 @@ service AccountService {
 
 service TransactionService {
     rpc MakeTransaction(MakeTransactionRequest) returns (Status);
+    rpc MakeDeposit(MakeDepositMakeWithdrawRequest) returns (Status);
+    rpc MakeWithdraw(MakeDepositMakeWithdrawRequest) returns (Status);
 }

@@ -145,6 +145,8 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TransactionServiceClient interface {
 	MakeTransaction(ctx context.Context, in *MakeTransactionRequest, opts ...grpc.CallOption) (*Status, error)
+	MakeDeposit(ctx context.Context, in *MakeDepositMakeWithdrawRequest, opts ...grpc.CallOption) (*Status, error)
+	MakeWithdraw(ctx context.Context, in *MakeDepositMakeWithdrawRequest, opts ...grpc.CallOption) (*Status, error)
 }
 
 type transactionServiceClient struct {
@@ -164,11 +166,31 @@ func (c *transactionServiceClient) MakeTransaction(ctx context.Context, in *Make
 	return out, nil
 }
 
+func (c *transactionServiceClient) MakeDeposit(ctx context.Context, in *MakeDepositMakeWithdrawRequest, opts ...grpc.CallOption) (*Status, error) {
+	out := new(Status)
+	err := c.cc.Invoke(ctx, "/TransactionService/MakeDeposit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *transactionServiceClient) MakeWithdraw(ctx context.Context, in *MakeDepositMakeWithdrawRequest, opts ...grpc.CallOption) (*Status, error) {
+	out := new(Status)
+	err := c.cc.Invoke(ctx, "/TransactionService/MakeWithdraw", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TransactionServiceServer is the server API for TransactionService service.
 // All implementations must embed UnimplementedTransactionServiceServer
 // for forward compatibility
 type TransactionServiceServer interface {
 	MakeTransaction(context.Context, *MakeTransactionRequest) (*Status, error)
+	MakeDeposit(context.Context, *MakeDepositMakeWithdrawRequest) (*Status, error)
+	MakeWithdraw(context.Context, *MakeDepositMakeWithdrawRequest) (*Status, error)
 	mustEmbedUnimplementedTransactionServiceServer()
 }
 
@@ -178,6 +200,12 @@ type UnimplementedTransactionServiceServer struct {
 
 func (UnimplementedTransactionServiceServer) MakeTransaction(context.Context, *MakeTransactionRequest) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MakeTransaction not implemented")
+}
+func (UnimplementedTransactionServiceServer) MakeDeposit(context.Context, *MakeDepositMakeWithdrawRequest) (*Status, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MakeDeposit not implemented")
+}
+func (UnimplementedTransactionServiceServer) MakeWithdraw(context.Context, *MakeDepositMakeWithdrawRequest) (*Status, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MakeWithdraw not implemented")
 }
 func (UnimplementedTransactionServiceServer) mustEmbedUnimplementedTransactionServiceServer() {}
 
@@ -210,6 +238,42 @@ func _TransactionService_MakeTransaction_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransactionService_MakeDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MakeDepositMakeWithdrawRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransactionServiceServer).MakeDeposit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/TransactionService/MakeDeposit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransactionServiceServer).MakeDeposit(ctx, req.(*MakeDepositMakeWithdrawRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TransactionService_MakeWithdraw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MakeDepositMakeWithdrawRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransactionServiceServer).MakeWithdraw(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/TransactionService/MakeWithdraw",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransactionServiceServer).MakeWithdraw(ctx, req.(*MakeDepositMakeWithdrawRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TransactionService_ServiceDesc is the grpc.ServiceDesc for TransactionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -220,6 +284,14 @@ var TransactionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MakeTransaction",
 			Handler:    _TransactionService_MakeTransaction_Handler,
+		},
+		{
+			MethodName: "MakeDeposit",
+			Handler:    _TransactionService_MakeDeposit_Handler,
+		},
+		{
+			MethodName: "MakeWithdraw",
+			Handler:    _TransactionService_MakeWithdraw_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

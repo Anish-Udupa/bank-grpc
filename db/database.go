@@ -19,6 +19,7 @@ func ConnectAndMigrate() (*gorm.DB, error) {
 		log.Info("Connected to database successfully")
 	}
 	db.AutoMigrate(&model.Account{})
+	db.AutoMigrate(&model.DepositWithdraw{})
 	db.AutoMigrate(&model.Transaction{})
 	return db, nil
 }
