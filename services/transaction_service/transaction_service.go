@@ -2,6 +2,7 @@ package transaction_service
 
 import (
 	pb "bank-grpc/pb"
+	"bank-grpc/services/helper"
 	"context"
 	"fmt"
 
@@ -12,7 +13,7 @@ import (
 
 const MAX_TRANSACTION_AMT uint32 = 50000
 
-type TransactionServiceServer struct{
+type TransactionServiceServer struct {
 	db *gorm.DB
 	pb.TransactionServiceServer
 }
@@ -31,7 +32,7 @@ func (t *TransactionServiceServer) MakeTransaction(ctx context.Context, req *pb.
 	transactionMsg := req.GetTransaction().GetMessage()
 
 	// Check if to account exists
-	toAccExists, err := checkAccExists(toAcc, t.db)
+	toAccExists, err := helper.CheckAccExists(toAcc, t.db)
 	if err != nil {
 		return generateInternalServerErrMsg()
 	}
@@ -43,7 +44,7 @@ func (t *TransactionServiceServer) MakeTransaction(ctx context.Context, req *pb.
 	}
 
 	// Authenticate from account
-	authSuccess, err := authenticateAccount(fromAcc, fromAccPasswd, t.db)
+	authSuccess, err := helper.AuthenticateAccount(fromAcc, fromAccPasswd, t.db)
 	if err != nil {
 		return generateInternalServerErrMsg()
 	}
@@ -63,7 +64,7 @@ func (t *TransactionServiceServer) MakeTransaction(ctx context.Context, req *pb.
 	}
 
 	// Check if balance is necessary
-	hasSufficientBal, err := checkSufficientBalance(fromAcc, transactionAmt, t.db)
+	hasSufficientBal, err := helper.CheckSufficientBalance(fromAcc, transactionAmt, t.db)
 	if err != nil {
 		return generateInternalServerErrMsg()
 	}
@@ -75,7 +76,7 @@ func (t *TransactionServiceServer) MakeTransaction(ctx context.Context, req *pb.
 	}
 
 	// Initiate transfer
-	err = makeTransaction(fromAcc, toAcc, transactionAmt, transactionMsg, t.db)
+	err = helper.MakeTransaction(fromAcc, toAcc, transactionAmt, transactionMsg, t.db)
 	if err != nil {
 		return &pb.Status{
 			Success: false,
@@ -95,7 +96,7 @@ func (t *TransactionServiceServer) MakeDeposit(ctx context.Context, req *pb.Make
 	message := req.GetMessage()
 
 	// Authenticate
-	isAuthenticated, err := authenticateAccount(accountNum, accountPass, t.db)
+	isAuthenticated, err := helper.AuthenticateAccount(accountNum, accountPass, t.db)
 	if err != nil {
 		return generateInternalServerErrMsg()
 	}
@@ -108,7 +109,7 @@ func (t *TransactionServiceServer) MakeDeposit(ctx context.Context, req *pb.Make
 	}
 
 	// Make deposit
-	err = makeDeposit(accountNum, amount, message, t.db)
+	err = helper.MakeDeposit(accountNum, amount, message, t.db)
 	if err != nil {
 		return &pb.Status{
 			Success: false,
@@ -129,7 +130,7 @@ func (t *TransactionServiceServer) MakeWithdraw(ctx context.Context, req *pb.Mak
 	message := req.GetMessage()
 
 	// Authenticate
-	isAuthenticated, err := authenticateAccount(accountNum, accountPass, t.db)
+	isAuthenticated, err := helper.AuthenticateAccount(accountNum, accountPass, t.db)
 	if err != nil {
 		return generateInternalServerErrMsg()
 	}
@@ -142,7 +143,7 @@ func (t *TransactionServiceServer) MakeWithdraw(ctx context.Context, req *pb.Mak
 	}
 
 	// Check sufficient balance
-	hasSufficientBal, err := checkSufficientBalance(accountNum, amount, t.db)
+	hasSufficientBal, err := helper.CheckSufficientBalance(accountNum, amount, t.db)
 	if err != nil {
 		return generateInternalServerErrMsg()
 	}
@@ -154,7 +155,7 @@ func (t *TransactionServiceServer) MakeWithdraw(ctx context.Context, req *pb.Mak
 	}
 
 	// Make withdraw
-	err = makeWithdraw(accountNum, amount, message, t.db)
+	err = helper.MakeWithdraw(accountNum, amount, message, t.db)
 	if err != nil {
 		return &pb.Status{
 			Success: false,

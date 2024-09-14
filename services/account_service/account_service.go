@@ -1,12 +1,16 @@
 package account_service
 
 import (
+	"bank-grpc/constant"
+	"bank-grpc/mapper"
 	pb "bank-grpc/pb"
+	"bank-grpc/services/helper"
 	"context"
 	"crypto/rand"
 	"fmt"
 	"math"
 	"math/big"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -126,3 +130,69 @@ func (a *AccountServiceServer) GetAccountBalance(ctx context.Context, req *pb.Ge
 	}
 }
 
+func (a *AccountServiceServer) GetAccountStatements(ctx context.Context, req *pb.GetAccountStatementsRequest) (*pb.GetAccountStatementResponse, error) {
+	accountNum := req.GetAccountNumber()
+	accountPass := req.GetPassword()
+	
+	// Authenticate
+	isAuthenticated, err := helper.AuthenticateAccount(accountNum, accountPass, a.db)
+	if err != nil {
+		log.Error(err)
+		return &pb.GetAccountStatementResponse{
+			Status: &pb.Status{
+				Success: false,
+				Message: constant.InternalServerErrorMsg,
+			}, 
+		}, status.Error(codes.Internal, "Internal server error. Please try again later")
+	}
+
+	if !isAuthenticated {
+		return &pb.GetAccountStatementResponse{
+			Status: &pb.Status{
+				Success: false,
+				Message: constant.AuthenticationErrorMsg,
+			},
+		}, nil
+	}
+
+	fromDate, err := time.Parse("2006-01-02", req.FromDate)
+	if err != nil {
+		return &pb.GetAccountStatementResponse{
+			Status: &pb.Status{
+				Success: false,
+				Message: "from_date must be in the format YYYY-MM-DD",
+			},
+		}, nil
+	}
+
+	toDate, err := time.Parse("2006-01-02", req.ToDate)
+	if err != nil {
+		return &pb.GetAccountStatementResponse{
+			Status: &pb.Status{
+				Success: false,
+				Message: "to_date must be in the format YYYY-MM-DD",
+			},
+		}, nil
+	}
+	statementCount := req.StatementCount
+	transactions, err := helper.GetAccountStatements(accountNum, fromDate, toDate, statementCount, a.db)
+	if err != nil {
+		log.Error(err)
+		return &pb.GetAccountStatementResponse{
+			Status: &pb.Status{
+				Success: false,
+				Message: constant.InternalServerErrorMsg,
+			}, 
+		}, status.Error(codes.Internal, "Internal server error. Please try again later")
+	}
+
+	statements := mapper.MapTransactionToAccountStatements(transactions)
+
+	return &pb.GetAccountStatementResponse{
+		Status: &pb.Status{
+			Success: true,
+			Message: "Successfully fetched account statements",
+		},
+		Statements: statements,
+	}, nil
+}

@@ -47,9 +47,31 @@ message MakeDepositMakeWithdrawRequest {
     string message = 4;
 }
 
+message GetAccountStatementsRequest {
+    uint32 account_number = 1;
+    string password = 2;
+    string from_date = 3;
+    string to_date = 4;
+    uint32 statement_count = 5;
+}
+
+message AccountStatements {
+    uint32 from_account_number = 1;
+    uint32 to_account_number = 2;
+    string transaction_date = 3;
+    uint32 amount = 4;
+    string message = 5;
+}
+
+message GetAccountStatementResponse {
+    repeated AccountStatements statements = 1;
+    Status status = 2;
+}
+
 service AccountService {
     rpc CreateAccount(CreateAccountRequest) returns (Status);
     rpc GetAccountBalance(GetAccountBalanceRequest) returns (GetAccountBalanceResponse);
+    rpc GetAccountStatements(GetAccountStatementsRequest) returns (GetAccountStatementResponse);
 }
 
 service TransactionService {

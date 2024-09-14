@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AccountServiceClient interface {
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*Status, error)
 	GetAccountBalance(ctx context.Context, in *GetAccountBalanceRequest, opts ...grpc.CallOption) (*GetAccountBalanceResponse, error)
+	GetAccountStatements(ctx context.Context, in *GetAccountStatementsRequest, opts ...grpc.CallOption) (*GetAccountStatementResponse, error)
 }
 
 type accountServiceClient struct {
@@ -52,12 +53,22 @@ func (c *accountServiceClient) GetAccountBalance(ctx context.Context, in *GetAcc
 	return out, nil
 }
 
+func (c *accountServiceClient) GetAccountStatements(ctx context.Context, in *GetAccountStatementsRequest, opts ...grpc.CallOption) (*GetAccountStatementResponse, error) {
+	out := new(GetAccountStatementResponse)
+	err := c.cc.Invoke(ctx, "/AccountService/GetAccountStatements", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility
 type AccountServiceServer interface {
 	CreateAccount(context.Context, *CreateAccountRequest) (*Status, error)
 	GetAccountBalance(context.Context, *GetAccountBalanceRequest) (*GetAccountBalanceResponse, error)
+	GetAccountStatements(context.Context, *GetAccountStatementsRequest) (*GetAccountStatementResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedAccountServiceServer) CreateAccount(context.Context, *CreateA
 }
 func (UnimplementedAccountServiceServer) GetAccountBalance(context.Context, *GetAccountBalanceRequest) (*GetAccountBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccountBalance not implemented")
+}
+func (UnimplementedAccountServiceServer) GetAccountStatements(context.Context, *GetAccountStatementsRequest) (*GetAccountStatementResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccountStatements not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 
@@ -120,6 +134,24 @@ func _AccountService_GetAccountBalance_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_GetAccountStatements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccountStatementsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).GetAccountStatements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/AccountService/GetAccountStatements",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).GetAccountStatements(ctx, req.(*GetAccountStatementsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccountBalance",
 			Handler:    _AccountService_GetAccountBalance_Handler,
+		},
+		{
+			MethodName: "GetAccountStatements",
+			Handler:    _AccountService_GetAccountStatements_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
