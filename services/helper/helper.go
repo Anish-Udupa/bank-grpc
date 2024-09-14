@@ -1,9 +1,11 @@
 package helper
 
 import (
+	"bank-grpc/enums"
 	model "bank-grpc/model"
 	"fmt"
 	"time"
+
 	"gorm.io/datatypes"
 
 	log "github.com/sirupsen/logrus"
@@ -80,6 +82,7 @@ func MakeTransaction(fromAcc, toAcc, amt uint32, msg string, db *gorm.DB) error 
 	transaction := model.Transaction{
 		FromAccountNumber: fromAcc,
 		ToAccountNumber: toAcc,
+		TransactionType: enums.Transfer,
 		Amount: amt,
 		Message: msg,
 	}
@@ -110,8 +113,9 @@ func MakeDeposit(accountNum uint32, amount uint32, message string, db *gorm.DB) 
 	transaction := model.Transaction{
 		FromAccountNumber: 0,
 		ToAccountNumber: accountNum,
+		TransactionType: enums.Deposit,
 		Amount: amount,
-		Message: "DEPOSIT",
+		Message: message,
 	}
 	db.Save(&transaction)
 
@@ -140,8 +144,9 @@ func MakeWithdraw(accountNum uint32, amount uint32, message string, db *gorm.DB)
 	transaction := model.Transaction{
 		FromAccountNumber: accountNum,
 		ToAccountNumber: 0,
+		TransactionType: enums.Withdraw,
 		Amount: amount,
-		Message: "WITHDRAW",
+		Message: message,
 	}
 
 	db.Save(&transaction)
